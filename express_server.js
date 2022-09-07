@@ -51,16 +51,25 @@ app.post("/urls/:id/delete", (req, res) => {
 
 })
 
+app.post("/urls/:id", (req, res) => { // allows user to edit longURLs in database
+
+  urlDatabase[req.params.id] = req.body['longURL'];
+  console.log(req.body['longURL']);
+  console.log(urlDatabase);
+  res.redirect("/urls/" + req.params.id); 
+
+})
 
 
-app.get("/u/:id", (req, res) => {
+
+app.get("/u/:id", (req, res) => { //user is redirected to longURL page 
 const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
 
 
 
-app.get("/urls/:id", (req, res) => {
+app.get("/urls/:id", (req, res) => { //user is taken to page where you can edit longURLs
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id]};
   res.render("urls_show", templateVars);
 });
