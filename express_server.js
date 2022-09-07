@@ -41,6 +41,11 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 })
 
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+  res.redirect("/urls");
+})
+
 app.get("/urls/:id", (req, res) => { //user is taken to page where you can edit longURLs
   console.log(req.params.id);
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies["username"]};
