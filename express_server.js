@@ -2,13 +2,29 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080; //default port 8080
+
+//middleware functions
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
 
+//databases/functions
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://wwww.google.com"
+};
+
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
 };
 
 function generateRandomString() {
@@ -27,21 +43,32 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = {urls: urlDatabase, username: req.cookies["username"]};
+  const templateVars = {urls: urlDatabase, user: users[req.cookies["user_id"]]};
   res.render('urls_index', templateVars);
 })
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {username: req.cookies["username"]};
+  const templateVars = {user: users[req.cookies["user_id"]]};
   res.render("urls_new", templateVars);
 })
 
 app.get("/register", (req, res) => {
-  const templateVars = {username: req.cookies["username"]}
+  const templateVars = {user: users[req.cookies["user_id"]]}
   res.render("register",templateVars);
 })
 app.post("/register", (req, res) => {
-  res.redirect("/urls");
+  const newUserID = generateRandomString();
+  const newUserEmail = req.body.email;
+  const newUserPassword = req.body.password;
+
+  users[newUserID] = {
+    id: newUserID,
+    email: newUserEmail,
+    password: newUserPassword
+  }
+  res.cookie('user_id', newUserID);
+  console.log(users); // to check if new user has been added
+  res.redirect('/urls');
 })
 
 app.post("/login", (req, res) => {
@@ -50,13 +77,13 @@ app.post("/login", (req, res) => {
 })
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect("/urls");
 })
 
 app.get("/urls/:id", (req, res) => { //user is taken to page where you can edit longURLs
   console.log(req.params.id);
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies["username"]};
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: users[req.cookies["user_id"]]};
   res.render("urls_show", templateVars);
 });
 

@@ -19,14 +19,14 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>   
         
       </div>
-      <% if (username) {%>
+      <% if (user) {%>
         <div style="margin-right: 1rem">Logged in as: </div>
-        <%= username %> 
+        <%= user.email %> 
         <form class="form-inline my-2 my-lg-0" method="POST" action="/logout" >
         <button class="btn btn-outline-dark"  type="submit">Log Out</button>
         </form>
         <%}%>
-        <% if (!username) {%>
+        <% if (!user) {%>
         <form class="form-inline my-2 my-lg-0" method="POST" action="/login" >
           <input class="form-control mr-sm-2" type="text" name="username"placeholder="Username" aria-label="Username">
           <button class="btn btn-outline-dark"  type="submit">Log In</button>
