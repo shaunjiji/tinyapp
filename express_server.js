@@ -3,12 +3,12 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080; //default port 8080
 
-//middleware functions
+//MIDDLEWARE FUNCTIONS
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
 
-//databases/functions
+//DATABASES
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://wwww.google.com"
@@ -26,7 +26,7 @@ const users = {
     password: "dishwasher-funk",
   },
 };
-
+//HELPER FUNCTIONS
 function generateRandomString() {
   let result = ' ';
   var characters = 'ABIJrstuvwxyz0123456789';
@@ -37,7 +37,19 @@ function generateRandomString() {
      }
      return result;
   }
-  
+
+function fetchUserByEmail (email) {
+for(const userID in users) {
+  if(users[userID].email === email){
+    return users[userID];
+  }
+} 
+return null;
+}
+
+
+
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -56,11 +68,25 @@ app.get("/register", (req, res) => {
   const templateVars = {user: users[req.cookies["user_id"]]}
   res.render("register",templateVars);
 })
+
+// app.get("/login", (req, res) => {
+
+//   res.render()
+// })
+
+
+
+
+
 app.post("/register", (req, res) => {
   const newUserID = generateRandomString();
   const newUserEmail = req.body.email;
   const newUserPassword = req.body.password;
 
+  if (!newUserEmail || !newUserPassword) {
+    return res.status(400).send();
+  }
+if (!fetchUserByEmail(newUserEmail)){
   users[newUserID] = {
     id: newUserID,
     email: newUserEmail,
@@ -68,7 +94,14 @@ app.post("/register", (req, res) => {
   }
   res.cookie('user_id', newUserID);
   console.log(users); // to check if new user has been added
-  res.redirect('/urls');
+  return res.redirect('/urls');
+}
+if (fetchUserByEmail(newUserEmail)) {
+  return res.status(400).send({
+    message: 'This email already exists.'
+  });
+  //can remove messag here if only 400 status needs to be sent out
+}
 })
 
 app.post("/login", (req, res) => {
