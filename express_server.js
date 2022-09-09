@@ -47,6 +47,7 @@ for(const userID in users) {
 return null;
 }
 app.get("/", (req, res) => {
+  console.log("test");
   res.send("Hello!");
 });
 
@@ -58,17 +59,27 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {user: users[req.cookies["user_id"]]};
+  if (!req.cookies["user_id"]){
+    return res.redirect("/login");
+  }
   res.render("urls_new", templateVars);
 })
 
 app.get("/register", (req, res) => {
   const templateVars = {user: users[req.cookies["user_id"]]}
+  if (req.cookies["user_id"]){
+    return res.redirect("/urls");
+  }
   res.render("register",templateVars);
 })
 
 app.get("/login", (req, res) => {
 const templateVars = {user: users[req.cookies["user_id"]]}
+if (req.cookies["user_id"]){
+  return res.redirect("/urls");
+}
 res.render("login", templateVars);
+
 })
 
 app.get("/urls/:id", (req, res) => { //user is taken to page where you can edit longURLs
@@ -123,18 +134,22 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
-  res.redirect("/urls");
+  res.redirect("/login");
 })
 
-
-
 app.post("/urls", (req, res) => {
-  console.log(req.body);
+  if (req.cookies["user_id"]) {
   let newId = generateRandomString(req.body)
   urlDatabase[newId] = req.body['longURL'];
   console.log(urlDatabase);
+  return res.redirect("/urls/" + newId);
+  }
+  else {
+    return res.status(400).send({
+      message: 'Please login to be able to shorten URLs!'
+    });
 
-  res.redirect("/urls/" + newId);
+  }
 });
 
 app.post("/urls/:id/delete", (req, res) => { //allows users to delete entries from databasee
@@ -152,8 +167,15 @@ app.post("/urls/:id", (req, res) => { // allows user to edit longURLs in databas
 
 
 app.get("/u/:id", (req, res) => { //user is redirected to longURL page 
+if (urlDatabase[req.params.id]) {
 const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
+}
+else {
+  return res.status(400).send({
+    message: 'This shortened URL does not exist! Sorry :('
+  });
+}
 });
 
 
