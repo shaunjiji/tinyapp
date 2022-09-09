@@ -16,7 +16,7 @@ const urlDatabase = {
     userID: "userRandomID",
   },
   s9m5xK: {
-    longURL: "http://wwww.google.com",
+    longURL: "http://www.google.com",
     userID: "user2RandomID",
   },
 };
@@ -271,7 +271,7 @@ app.post("/urls/:id", (req, res) => { // allows user to edit longURLs in databas
 
 app.get("/u/:id", (req, res) => { //user is redirected to longURL page 
 if (urlDatabase[req.params.id]) {
-const longURL = urlDatabase[req.params.id];
+const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 }
 else {
