@@ -2,6 +2,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080; //default port 8080
+const bcrypt = require("bcryptjs");
 
 //MIDDLEWARE FUNCTIONS
 app.set("view engine", "ejs");
@@ -23,7 +24,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "shaun",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -32,16 +33,20 @@ const users = {
   },
 };
 //HELPER FUNCTIONS
-function generateRandomString() {
-  let result = ' ';
-  var characters = 'ABIJrstuvwxyz0123456789';
-  var charactersLength = characters.length;
-      for ( var i = 0; i < (charactersLength - 16); i++ ) {
-        result += characters.charAt(Math.floor(Math.random() * 
-   charactersLength));
-     }
-     return result;
+function generateRandomString(length) {
+  var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
+
+    if (! length) {
+        length = Math.floor(Math.random() * chars.length);
+    }
+
+    var str = '';
+    for (var i = 0; i < length; i++) {
+        str += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return str;
   }
+
 function fetchUserByEmail (email) {
 for(const userID in users) {
   if(users[userID].email === email){
@@ -108,29 +113,37 @@ res.render("login", templateVars);
 })
 
 app.get("/urls/:id", (req, res) => { //user is taken to page where you can edit longURLs
+  if (!req.cookies["user_id"]) {
+    return res.status(400).send({
+      message: 'Please login/register to view this page.'
+    });
+  }
   if (req.cookies["user_id"]){
   let currentUserData = urlsForUser(req.cookies["user_id"]);
-  
+
   if(currentUserData[req.params.id]) {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.cookies["user_id"]]};
   return res.render("urls_show", templateVars);
   }
+  
+  if(!urlDatabase[req.params.id]){
+    return res.status(400).send({
+      message: 'This id does not exist. Sorry!:('
+    });  
+  }
+
   if(!currentUserData[req.params.id]){
     return res.status(400).send({
       message: 'You do not have access to this page since you do not own this URL. Sorry! :('
     });  
   }
 }
-  else {
-    return res.status(400).send({
-      message: 'Please login/register to view this page.'
-    });
-  }
+
 });
 
 
 app.post("/register", (req, res) => {
-  const newUserID = generateRandomString();
+  const newUserID = generateRandomString(6);
   const newUserEmail = req.body.email;
   const newUserPassword = req.body.password;
 
@@ -179,10 +192,10 @@ app.post("/logout", (req, res) => {
 
 app.post("/urls", (req, res) => { 
   if (req.cookies["user_id"]) {
-  let newId = generateRandomString(req.body);
+  let newId = generateRandomString(6);
   urlDatabase[newId] = {
     longURL: req.body['longURL'],
-    userID: ""
+    userID: req.cookies["user_id"]
   };
   console.log(urlDatabase);
   return res.redirect("/urls/" + newId);
@@ -196,17 +209,31 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => { //allows users to delete entries from databasee
-  if (req.cookies["user_id"]){
+  if (!req.cookies["user_id"]){
+    return res.status(400).send({
+      message: 'Please login to be able to delete URLs!'
+    });
+  }  
+  
+  let currentUserData = urlsForUser(req.cookies["user_id"]);
+
+  if(currentUserData[req.params.id]) {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
   }
+  if(!urlDatabase[req.params.id]){
+    return res.status(400).send({
+      message: 'This id does not exist. Sorry!:('
+    });  
+  }
   else {
     return res.status(400).send({
-      message: 'Please login to be able to shorten URLs!'
+      message: 'You do not have access to this page since you do not own this URL. Sorry! :('
     });
-  }
+  }  
 
-})
+
+});
 
 app.post("/urls/:id", (req, res) => { // allows user to edit longURLs in database
   if (!req.cookies["user_id"]){
@@ -217,7 +244,6 @@ app.post("/urls/:id", (req, res) => { // allows user to edit longURLs in databas
 
   let currentUserData = urlsForUser(req.cookies["user_id"]);
   if(currentUserData[req.params.id]) {
-  // urlDatabase[req.params.id].longURL = req.body['longURL']; 
   urlDatabase[req.params.id] = {
     longURL: req.body.longURL,
     userID: req.cookies["user_id"]
@@ -225,13 +251,7 @@ app.post("/urls/:id", (req, res) => { // allows user to edit longURLs in databas
   console.log(urlDatabase);
   return res.redirect("/urls"); 
    }
-  
-  //  if(!currentUserData[req.params.id]){
-  //   return res.status(400).send({
-  //     message: 'You do not have access to this page since you do not own this URL. Sorry! :('
-  //   });
-  // }  
-
+    
   if(!urlDatabase[req.params.id]){
     return res.status(400).send({
       message: 'This id does not exist. Sorry!:('
