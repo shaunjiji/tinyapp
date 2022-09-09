@@ -24,7 +24,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "shaun",
+    password: "purple-monkey-dinosaur",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -154,7 +154,7 @@ if (!fetchUserByEmail(newUserEmail)){
   users[newUserID] = {
     id: newUserID,
     email: newUserEmail,
-    password: newUserPassword
+    password: bcrypt.hashSync(newUserPassword,10)
   }
   res.cookie('user_id', newUserID);
   console.log(users); // to check if new user has been added
@@ -174,7 +174,9 @@ app.post("/login", (req, res) => {
 
   if(fetchUserByEmail(testUserEmail)){
   const currentUser = fetchUserByEmail(testUserEmail);
-  if (currentUser.password === testUserPassword) {
+
+  if (bcrypt.compareSync(testUserPassword, currentUser.password)){
+  
   res.cookie('user_id', currentUser.id);
   return res.redirect("/urls");
   }
