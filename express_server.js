@@ -1,14 +1,13 @@
 const express = require("express");
-// const cookieParser = require("cookie-parser");
 const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080; //default port 8080
 const bcrypt = require("bcryptjs");
+const {fetchUserByEmail} = require('./helpers.js');
 
 //MIDDLEWARE FUNCTIONS
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-// app.use(cookieParser())
 app.use(cookieSession({
   name: 'session', 
   keys: ["cookie"]
@@ -53,14 +52,6 @@ function generateRandomString(length) {
     return str;
   }
 
-function fetchUserByEmail (email) {
-for(const userID in users) {
-  if(users[userID].email === email){
-    return users[userID];
-  }
-} 
-return null;
-}
 
 function urlsForUser (id) {
   let newURLDatabase = {};
@@ -150,22 +141,23 @@ app.post("/register", (req, res) => {
   const newUserID = generateRandomString(6);
   const newUserEmail = req.body.email;
   const newUserPassword = req.body.password;
+  const hashedPassword = bcrypt.hashSync(newUserPassword,10);
 
   if (!newUserEmail || !newUserPassword) {
     return res.status(400).send();
   }
-if (!fetchUserByEmail(newUserEmail)){
+if (!fetchUserByEmail(newUserEmail, users)){
   users[newUserID] = {
     id: newUserID,
     email: newUserEmail,
-    password: bcrypt.hashSync(newUserPassword,10)
+    password: hashedPassword
   }
   //console.log("hash password", bcrypt.hashSync(newUserPassword,10));
   req.session.user_id = newUserID;
   console.log(users); // to check if new user has been added
   return res.redirect('/urls');
 }
-if (fetchUserByEmail(newUserEmail)) {
+if (fetchUserByEmail(newUserEmail, users)) {
   return res.status(400).send({
     message: 'This email already exists.'
   });
@@ -177,8 +169,8 @@ app.post("/login", (req, res) => {
   const testUserEmail = req.body.email;
   const testUserPassword = req.body.password;
 
-  if(fetchUserByEmail(testUserEmail)){
-  const currentUser = fetchUserByEmail(testUserEmail);
+  if(fetchUserByEmail(testUserEmail, users)){
+  const currentUser = fetchUserByEmail(testUserEmail, users);
 
   if (bcrypt.compareSync(testUserPassword, currentUser.password)){
   req.session.user_id = currentUser.id;
@@ -186,7 +178,7 @@ app.post("/login", (req, res) => {
   }
   return res.status(403).send();
   }
-  if(!fetchUserByEmail(testUserEmail)){
+  if(!fetchUserByEmail(testUserEmail, users)){
     return res.status(403).send();
   }
 })
