@@ -52,7 +52,6 @@ function generateRandomString(length) {
     return str;
   }
 
-
 function urlsForUser (id) {
   let newURLDatabase = {};
   for (const key in urlDatabase){
@@ -152,9 +151,7 @@ if (!fetchUserByEmail(newUserEmail, users)){
     email: newUserEmail,
     password: hashedPassword
   }
-  //console.log("hash password", bcrypt.hashSync(newUserPassword,10));
   req.session.user_id = newUserID;
-  console.log(users); // to check if new user has been added
   return res.redirect('/urls');
 }
 if (fetchUserByEmail(newUserEmail, users)) {
@@ -196,7 +193,6 @@ app.post("/urls", (req, res) => {
     longURL: req.body['longURL'],
     userID: req.session.user_id
   };
-  console.log(urlDatabase);
   return res.redirect("/urls/" + newId);
   }
   else {
@@ -247,7 +243,6 @@ app.post("/urls/:id", (req, res) => { // allows user to edit longURLs in databas
     longURL: req.body.longURL,
     userID: req.session.user_id
   }
-  console.log(urlDatabase);
   return res.redirect("/urls"); 
    }
     
